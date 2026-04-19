@@ -698,9 +698,14 @@ enum WindowReader {
             return []
         }
 
-        let runningAppsByPID = Dictionary(
-            uniqueKeysWithValues: NSWorkspace.shared.runningApplications.map { ($0.processIdentifier, $0) }
-        )
+        var runningAppsByPID: [pid_t: NSRunningApplication] = [:]
+        for app in NSWorkspace.shared.runningApplications {
+            let processIdentifier = app.processIdentifier
+            guard processIdentifier > 0, runningAppsByPID[processIdentifier] == nil else {
+                continue
+            }
+            runningAppsByPID[processIdentifier] = app
+        }
         let currentBundleID = Bundle.main.bundleIdentifier
 
         return windowInfos.compactMap { info -> WindowItem? in

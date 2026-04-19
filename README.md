@@ -51,6 +51,22 @@ Basic appearance values live near the top of `Sources/main.swift` in `TaskbarSet
 - `entryTextColor`
 - `entryCornerRadius`
 
+## Releases
+
+GitHub Actions builds release binaries for Apple Silicon and Intel Macs when a tag starting with `v` is pushed:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release workflow uploads:
+
+- `MacTaskbar-macos-arm64.tar.gz`
+- `MacTaskbar-macos-arm64.tar.gz.sha256`
+- `MacTaskbar-macos-x86_64.tar.gz`
+- `MacTaskbar-macos-x86_64.tar.gz.sha256`
+
 ## License
 
 MIT

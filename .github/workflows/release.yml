@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists"
+          else
+            gh release create "$TAG" \
+              --title "MacTaskbar $TAG" \
+              --notes "MacTaskbar release $TAG"
+          fi
+
+  build:
+    name: Build ${{ matrix.name }}
+    needs: create-release
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Apple Silicon
+            runner: macos-26
+            arch: arm64
+          - name: Intel
+            runner: macos-26-intel
+            arch: x86_64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build release binary
+        run: swift build -c release
+
+      - name: Package
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: |
+          set -euo pipefail
+          PACKAGE_DIR="MacTaskbar-macos-$ARCH"
+          ARCHIVE="$PACKAGE_DIR.tar.gz"
+
+          rm -rf "$PACKAGE_DIR" "$ARCHIVE" "$ARCHIVE.sha256"
+          mkdir -p "$PACKAGE_DIR"
+          cp .build/release/MacTaskbar "$PACKAGE_DIR/MacTaskbar"
+          cp README.md LICENSE "$PACKAGE_DIR/"
+          chmod +x "$PACKAGE_DIR/MacTaskbar"
+          tar -czf "$ARCHIVE" "$PACKAGE_DIR"
+          shasum -a 256 "$ARCHIVE" > "$ARCHIVE.sha256"
+
+      - name: Upload release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          gh release upload "$TAG" \
+            "MacTaskbar-macos-$ARCH.tar.gz" \
+            "MacTaskbar-macos-$ARCH.tar.gz.sha256" \
+            --clobber

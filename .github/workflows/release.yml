@@ -60,13 +60,12 @@ jobs:
           PACKAGE_DIR="MacTaskbar-macos-$ARCH"
           ARCHIVE="$PACKAGE_DIR.tar.gz"
 
-          rm -rf "$PACKAGE_DIR" "$ARCHIVE" "$ARCHIVE.sha256"
+          rm -rf "$PACKAGE_DIR" "$ARCHIVE"
           mkdir -p "$PACKAGE_DIR"
           cp .build/release/MacTaskbar "$PACKAGE_DIR/MacTaskbar"
           cp README.md LICENSE "$PACKAGE_DIR/"
           chmod +x "$PACKAGE_DIR/MacTaskbar"
           tar -czf "$ARCHIVE" "$PACKAGE_DIR"
-          shasum -a 256 "$ARCHIVE" > "$ARCHIVE.sha256"
 
       - name: Upload release assets
         env:
@@ -77,5 +76,4 @@ jobs:
         run: |
           gh release upload "$TAG" \
             "MacTaskbar-macos-$ARCH.tar.gz" \
-            "MacTaskbar-macos-$ARCH.tar.gz.sha256" \
             --clobber
